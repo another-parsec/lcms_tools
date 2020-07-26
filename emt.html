@@ -1,0 +1,726 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Exact Mass Calculator</title>
+    <style>
+	
+		*{
+            
+            box-sizing: border-box;
+            user-select: none;
+			-webkit-user-select: none;
+			font-family: 'Helvetica', sans-serif;
+        }
+        
+         html, body{
+            
+            margin: 0;
+            height: 100%;
+            width: 100%;
+             -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+		
+		#3c3c3c
+		
+		 .rw{
+            
+            width: 80%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+    
+		body.overlay::after{
+			
+			content: "";
+			position: fixed;
+			top:0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0, 0, 0, 0.5);
+			z-index: 100;
+		}
+        
+        table{
+            
+            border-collapse: collapse;
+			text-align: left;
+        }
+		
+		tr:last-child td{
+            
+            border-bottom:none;
+        }
+        
+        th, td{
+            
+            padding:10px;
+            padding-right: 15px;
+            min-width: 150px;
+            max-width: 300px;
+        }
+        
+        th{
+            
+            padding-bottom: 15px;
+            border-bottom: 2px solid black;
+            vertical-align: center;
+        }
+		
+		td:first-child{
+            
+            padding-bottom:20px;
+        }
+        
+        td{
+            
+            vertical-align: top;
+            border-bottom: 1px solid #afafaf;
+        }
+		
+		input[type="number"]{
+			
+			width: 3em;
+		}
+		
+		#control_area{
+            
+            position: fixed;
+            top:0;
+            background: #d6d6d6;
+            width:100%;
+            left:0;
+            padding: 10px;
+			padding-bottom:0;
+			z-index: 100;
+        }
+		
+		#mode_select{
+			
+			width: 12em;
+			margin-right: 15px;
+		}
+		
+		
+		#search_bar{
+			
+			width: calc(100% - 29em - 30px);
+			padding: 3px;
+			margin-right: 15px;
+		}
+		
+		#search_button{
+			
+			width: 12em;
+		}
+		
+		#search_bar:focus{
+			
+			outline:2px solid black;
+		}
+        
+        #input_area{
+            
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        #button_bar button{
+            
+            margin-right: 15px;
+            margin-bottom: 15px;
+        }
+        
+        #control_area h1{
+            
+            margin-bottom: 20px;
+        }
+		
+		#mass_list{
+            
+            margin-top:180px;
+			position: relative;
+        }
+		
+		#mass_list img{
+			
+			    height: 90px;
+   				 width: 100%;
+   				 object-fit: cover;
+			transition:all 0.3s;
+		}
+		
+		#candidate_list{
+			
+			position: fixed;
+			background: rgba(47, 75, 130, 0.83);
+			z-index: 100;
+			border:1px solid black;
+			border-top: none;
+			color:white;
+			opacity: 0;
+			pointer-events: none;
+		}
+		
+		#candidate_list div{
+			
+			margin-bottom: 10px;
+			padding: 5px;
+			cursor: pointer;
+		}
+		
+		#candidate_list div:hover{
+			
+			background: white;
+			color:black;
+			font-weight: bold;
+		}
+		
+		.show{
+			
+			opacity: 1.0 !important;
+			pointer-events: all !important;
+		}
+		
+		#copytext{
+			
+			position: fixed;
+			top:-2000px;
+		}
+		
+		#status_bar{
+	
+			font-weight: lighter;
+			letter-spacing: 0.5px;
+			color:white;
+			padding:1em;
+			font-size: 14px;
+			width: 100%;
+			margin-bottom: 0.5em;
+			position: fixed;
+			top:-50px;
+			-webkit-transition: top 0.2s;
+			transition: top 0.2s;
+			z-index: 100000;
+		}
+
+		#status_bar.show{
+
+			top:0px;
+		}
+
+		#status_bar.success{
+
+			background: #4aa24a;
+		}
+
+		#status_bar.error{
+
+			background: #af4949;
+		}
+		
+		#mass_list img:hover{
+			
+			    height:200px;
+		}
+		
+		.clickcopy{
+			
+			transition: all 0.15s;
+			transform-origin: center;
+			cursor: pointer;
+		}
+		
+		.clickcopy.pop{
+			
+			transform:translateY(-8px);
+			
+			font-weight: bold;
+			font-size: 1.3em;
+			color: red;
+		}
+		
+		*[data-mz].invalid{
+			
+			color:red;
+		}
+		
+		#fileupload{
+			
+			visibility: hidden;
+		}
+	
+	</style>
+</head>
+<body>
+	<div id = "control_area">
+		<h1 class="rw">Exact Mass Lookup</h1>
+		<div class="rw" id = "input_area">
+			mode:
+			<select id = "mode_select">
+				<option data-value = "ds">pubchem search</option>
+				<option data-value = "fc">formula calculation</option>
+			</select>
+			<input id = "search_bar" data-fc = "Enter a chemical formula to calculate its exact mass" data-ds = "Enter the name of a compound to search for it in Pubchem" type="text">
+			<div id = "candidate_list"></div>
+			<button id = "search_button">search</button>
+		</div>
+		<div class="rw" id = "button_bar">
+			<button id = "upload_search_list_button">upload search list</button>
+			<button id = "download_button">download</button>
+			<span style="margin-left: 50px;">C13 mass shift: </span>
+			<input style="margin-right: 50px;" id = "mass_shift_input" type = "number" min="0" value="0">
+			copy mode: 
+			<select id = "copy_select">
+				<option data-value = "em">exact mass</option>
+				<option data-value = "emr">exact mass range (15ppm)</option>
+			</select>
+		</div>
+	</div>
+	<table class = "rw" id = "mass_list">
+		<tr class = "header_row">
+			 <th>name</th>
+        	 <th>image</th>
+       	 	 <th>formula</th>
+       	 	 <th>fw(g/mol)</th>
+       	 	 <th>[M + <span class = "shift_n">0</span>]</th>
+        	 <th>[M + <span class = "shift_n">0</span>] - H</th>
+        	 <th>[M + <span class = "shift_n">0</span>] + H</th>
+		</tr>
+	</table>
+
+ <div id = "status_bar"></div>
+ <input id = "copytext" type="text">
+ <input id = "fileupload" type="file" accept=".csv">
+ <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous">
+	</script>
+ <script src = "https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.2.0/papaparse.min.js"></script>
+ <script src="massc2.js"></script>
+ <script>
+	 
+	 
+	 const STATUS_BAR = $('#status_bar');
+	 const SEARCH_BAR = $("#search_bar");
+
+	 function FLASH_STATUS_BAR(status, message){
+
+		if(status == 'error'){
+
+			STATUS_BAR.removeClass("success");
+			STATUS_BAR.addClass("error");
+		}
+		else if(status == 'success'){
+
+			STATUS_BAR.removeClass("error");
+			STATUS_BAR.addClass("success");
+		}
+
+		STATUS_BAR.addClass("show");
+		STATUS_BAR.html(message);
+
+		setTimeout(function(){ STATUS_BAR.removeClass("show"); }, 600);
+	}
+	 
+	 SEARCH_BAR.on("keypress", function(e){
+		 
+		 if(e.key == "Enter"){
+			 
+			if(BAR_MODE == "ds"){
+
+				INITIATE_DATABASE_SEARCH_WITH_STRING($(this).val());
+			}
+			else{
+				 
+				 CALCULATE_EXACT_MASS_FROM_STRING($(this).val());
+			}
+		}
+	 });
+	 
+	 $("#search_button").on("click", function(e){
+		 
+		if(BAR_MODE == "ds"){
+
+			INITIATE_DATABASE_SEARCH_WITH_STRING(SEARCH_BAR.val());
+		}
+		else{
+
+			 CALCULATE_EXACT_MASS_FROM_STRING(SEARCH_BAR.val());
+		}
+		 
+		  SEARCH_BAR.focus();
+	 });
+	 
+	 function INITIATE_DATABASE_SEARCH_WITH_STRING(str){
+		 
+		 var text = str.trim();
+		 if(text.length < 3) return;
+		 
+		 GET_CANDIDATES_FOR_STRING(text, function(compounds){
+				
+			DID_RECIEVE_CANDIDATE_COMPOUNDS(compounds);
+		});
+	 }
+	 
+	 function CALCULATE_EXACT_MASS_FROM_STRING(str){
+		 
+		 var text = str.trim();
+		 if(text.length < 1) return;
+		 
+		 var rdata = {};
+		 rdata.formula = text;
+		 
+		 var mass_data = GET_MASS_DATA_FROM_FORMULA(text);
+		 
+		 if(mass_data.m0 <= 0) {
+			 
+			  FLASH_STATUS_BAR('error', 'The mass of the entered formula could not be calculated');
+			  return;
+		 }
+		 
+		 for(var d in mass_data) rdata[d] = mass_data[d];
+		 
+		 var new_row = GET_NEW_RESULT_ROW_FOR_DATA(rdata);
+		 $("#mass_list").append(new_row);	
+		 
+		 UPDATE_MASS_SHIFTS();
+	 }
+	 
+	 function GET_CANDIDATES_FOR_STRING(str, f){
+		 
+		 var url = 'https://pubchem.ncbi.nlm.nih.gov/rest/autocomplete/compound/';
+		 url += str;
+		 
+		 $.ajax({url:url, dataType:"json", success: function(result){
+			 
+			 var compounds = result["dictionary_terms"]["compound"];
+			 if(f != null) f.call(this, compounds);
+		 },
+		 error:function(){
+	
+			FLASH_STATUS_BAR('error', 'The pubchem server could not be reached.');
+		 }
+		});
+	 }
+	 
+	 function DID_RECIEVE_CANDIDATE_COMPOUNDS(compounds){
+		 
+		 var search_string = SEARCH_BAR.val().trim().toLocaleLowerCase();
+		 
+		 for(var c of compounds){
+			 
+			 if(c.trim().toLowerCase() == search_string){
+				 
+				 GET_DATA_FOR_COMPOUND(c, function(results){
+					 
+					 SEARCH_BAR.val("");
+					 DID_RECIEVE_DATA_FOR_COMPOUND(c, results);
+				 });
+				 return;
+			 }	 
+		 }
+		 
+		 SHOW_CANDIDATE_COMPOUNDS(compounds);
+	 }
+	 
+	 function SHOW_CANDIDATE_COMPOUNDS(compounds){
+		 
+		 var list = $("#candidate_list");
+		 list.html("");
+		 
+		 for(var c of compounds){
+			 
+			 var item = $('<div>'+ c +'</div>');
+			 item.click(function(){
+				 
+				 var compound_name = $(this).html();
+				 SEARCH_BAR.val(compound_name);
+				 
+				 GET_DATA_FOR_COMPOUND(compound_name, function(results){
+					 
+					 SEARCH_BAR.val("");
+					 DID_RECIEVE_DATA_FOR_COMPOUND(compound_name, results);
+				 });
+				 
+				 list.removeClass("show");
+			 })
+			 list.append(item);
+		 }
+		 	 
+		 var rect = SEARCH_BAR[0].getBoundingClientRect();
+		 list.css({top:rect.top + rect.height + "px", left:rect.left + "px", width:rect.width + "px"});
+		 list.addClass("show");
+	 }
+	 
+	 function GET_DATA_FOR_COMPOUND(compound_name, f, ef){
+		 
+		var url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/";
+		url += compound_name;
+		url += "/property/MolecularFormula,MolecularWeight,IsomericSMILES/JSON";
+		url = encodeURI(url);
+
+		$.ajax({url: url,  dataType: "json", success: function(result){
+			 
+			 var props = result.PropertyTable.Properties[0];
+			 if(f != null) f.call(this, props);
+		 },
+		 error:function(){
+	
+			 ERROR_DID_OCCUR_DURING_DATA_REQUEST();
+			 if(ef != null) ef.call(this);
+		 }
+		});
+		 
+	 }
+	 
+	 function DID_RECIEVE_DATA_FOR_COMPOUND(name, data){
+		 
+		 var rdata = {};
+		 rdata.name = name;
+		 rdata.formula = data.MolecularFormula;
+		 rdata.mw = data.MolecularWeight;
+		 var mass_data = GET_MASS_DATA_FROM_FORMULA(rdata.formula);
+		 for(var d in mass_data) rdata[d] = mass_data[d];
+		 
+		 var new_row = GET_NEW_RESULT_ROW_FOR_DATA(rdata);
+		 $("#mass_list").append(new_row);	
+		 
+		 UPDATE_MASS_SHIFTS();
+		 
+		 SEARCH_BAR.focus();
+	 }
+	 
+	 function GET_MASS_DATA_FROM_FORMULA(formula){
+		 
+		 var m0 = exact_mass(formula);
+		 var m0mh = m0 - PROTON_MASS;
+		 var m0ph = m0 + PROTON_MASS;
+
+		 return {
+			 m0:m0,
+			 m0mh:m0mh,
+			 m0ph:m0ph,
+		 }
+	 }
+	 
+	 function GET_NEW_RESULT_ROW_FOR_DATA(data){
+		 
+		 var row = '<tr class="content_row" ';
+		 
+		 row += 'data-formula = "' + data.formula + '"';
+		 row += '>';
+		 
+		 if(data.name != undefined){
+			 
+			 row += '<td>' + data.name + '</td>';
+		 
+			 var id = new Date().getTime();
+			 var src = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/";
+			 src += data.name;
+			 src += "/PNG";	
+			 row += '<td>' + '<img id ="' + id + '" src="' + encodeURI(src) + '">' + '</td>';
+		 }
+		 else{
+			 
+			 row += '<td>MANUAL ENTRY:</td>';
+			 row += '<td></td>';
+		 }
+		 
+		 row += '<td>' + data.formula + '</td>';
+		 
+		 if(data.mw) row += '<td>' + data.mw + '</td>';
+		 else row += '<td></td>';
+		 
+		 row += '<td data-mz = "' + data.m0 +'" class="clickcopy Mn">' + data.m0.toFixed(4) + '</td>';
+		 row += '<td data-mz = "' + data.m0mh + '" class="clickcopy Mn_minus_H">' + data.m0mh.toFixed(4) + '</td>';
+		 row += '<td data-mz = "' + data.m0ph + '" class="clickcopy Mn_plus_H">' + data.m0ph.toFixed(4) +'</td>';
+		
+		 row += "</tr>";
+		 
+		 var dom_row = $(row);
+		 dom_row.find(".clickcopy").on("click", function(e){
+			 
+			 var text = $(this).html();
+			 var copy_mode = $("#copy_select").find("option:selected").attr("data-value");
+			 if(copy_mode != 'em'){
+				 
+				 var range = MZ_RANGE(parseFloat(text), 15);
+			 	 text = range.min.toFixed(3) + '-' + range.max.toFixed(3);
+			 }
+			 
+			 COPY_TEXT_FROM_NODE(text, $(this));
+		 })
+		 
+		 return dom_row;
+	 }
+	 
+	 function ERROR_DID_OCCUR_DURING_DATA_REQUEST(){
+		 
+		  FLASH_STATUS_BAR('error', 'An error occurred and the search could not be completed.');
+	 }
+	 
+	 $("#mass_shift_input").on("input", function(){
+		 
+		 UPDATE_MASS_SHIFTS();
+	 })
+	 
+	 function COPY_TEXT_FROM_NODE(text, node){
+		 
+		 var ct = $("#copytext");
+		 ct.val(text)
+		 ct[0].focus();
+		 ct[0].select();
+		 document.execCommand("copy");
+		 
+		 node.addClass("pop");
+		 setTimeout(function(){node.removeClass("pop")}, 130);
+		 
+		 FLASH_STATUS_BAR('success', 'Value copied to clipboard.')
+	 }
+	 
+	 function GET_ACTIVE_MASS_SHIFT(){
+		 
+		 var v = $("#mass_shift_input").val();
+		 if(v.trim().length == 0) return 0;
+		 
+		 return C_NEUTRON_MASS*parseInt(v);
+	 }
+	 
+	 function UPDATE_MASS_SHIFTS(){
+		 
+		 var c13n = parseInt($("#mass_shift_input").val());
+		 $(".shift_n").html(c13n);
+		 
+		 var shift = GET_ACTIVE_MASS_SHIFT();
+		 
+		 $("*[data-mz]").each(function(){
+			 
+			 var mz = parseFloat($(this).attr("data-mz"));
+			 $(this).html((mz + shift).toFixed(4));
+			 
+			 var num_c = formula_from_str($(this).parent().attr("data-formula"))["C"];
+			 if(num_c == undefined && c13n != 0){
+				 
+				 $(this).addClass("invalid");
+			 }
+			 else if(c13n > num_c){
+				 
+				 $(this).addClass("invalid");
+			 }
+			 else{
+				 
+				  $(this).removeClass("invalid");
+			 }
+		 })
+	 }
+	 
+	 var BAR_MODE = 'ds';
+	 SEARCH_BAR.attr("placeholder", SEARCH_BAR.attr("data-" + BAR_MODE));
+	 
+	 $('#mode_select').on('input', function(){
+		 
+		SWITCH_BAR_MODE();
+	 });	
+	 
+	 
+	 function SWITCH_BAR_MODE(){
+		 		 
+		 BAR_MODE = BAR_MODE == 'ds'? 'fc': 'ds';
+
+		 SEARCH_BAR.attr("placeholder", SEARCH_BAR.attr("data-" + BAR_MODE));
+		 $("#candidate_list").removeClass("show");
+		 SEARCH_BAR.val('');
+		 SEARCH_BAR.focus();
+	 }
+	 
+	 SEARCH_BAR.focus();
+	 
+	 
+	 $("#upload_search_list_button").on("click", function(){
+		 
+		 $("#fileupload").click();
+	 });
+	 
+	 $("#fileupload").on('change', function(e){
+		 
+		 var file = this.files[0];	
+		 var reader = new FileReader();
+	     reader.readAsText(file);
+		 reader.onload = function(e) {
+			 
+			 Papa.parse(e.target.result, {
+			  header: false,
+			  dynamicTyping: true,
+			  complete: function(results) {
+				
+				COMPOUND_NAME_FILE_WAS_UPLOADED(results.data);
+			  }
+			});
+	  	}
+	 });
+	 
+	 function COMPOUND_NAME_FILE_WAS_UPLOADED(rows){
+		 
+		var names = [];
+		for(var row of rows) names.push(row[0]);
+		 
+		SEARCH_FOR_FIRST_ITEM(names);
+	 }
+	 
+	 function SEARCH_FOR_FIRST_ITEM(items){
+		 
+		 if(items.length == 0) return;
+
+		 GET_DATA_FOR_COMPOUND(items[0], function(results){
+			 
+			  DID_RECIEVE_DATA_FOR_COMPOUND(items[0], results);
+			  items.shift();
+			  SEARCH_FOR_FIRST_ITEM(items);
+		 }, function(){
+			 
+			  items.shift();
+			  SEARCH_FOR_FIRST_ITEM(items);
+		 })
+	 }
+	 
+	 $("#download_button").on("click", function(){
+		 
+		 DOWNLOAD_TABLE();
+	 });
+	 
+	 function DOWNLOAD_TABLE(){
+		 
+		 var rows = [];
+		 var n = $("#mass_shift_input").val();
+		 
+		 rows.push(["name", "formula", "fw", "M" + n, "M" + n + "-H", "M" + n+ "+H"]);
+		 
+		 $("#mass_list").find(".content_row").each(function(){
+			 
+			 var row_values = [];
+			 var row = $(this);
+			 row.find("td").each(function(){
+				 
+				 if($(this).children().length > 0) return;
+				 row_values.push($(this).html());
+			 });
+			 
+			 rows.push(row_values); 
+		 });
+		 
+		 var csv = Papa.unparse(rows);
+		 
+		 var link = document.createElement('a');
+		 link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(csv));
+		 link.setAttribute('download', "exact_mass_results_" + new Date().toISOString().slice(0,10) + ".csv");
+		 link.style.display = 'none';
+
+		 document.body.appendChild(link);
+		 link.click();
+		 document.body.removeChild(link);	  
+	 }
+	
+	</script>
+</body>
+</html>
