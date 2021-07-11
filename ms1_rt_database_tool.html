@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>MS1-RT Database</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        font-family: "Helvetica", sans-serif;
+        -webkit-text-stroke: 1px transparent;
+        margin: 0;
+      }
+
+      *::-webkit-scrollbar {
+        width: 0 !important;
+      }
+
+      ::selection {
+        background: #e86b00; /* WebKit/Blink Browsers */
+        color: white;
+      }
+      ::-moz-selection {
+        background: #e86b00; /* WebKit/Blink Browsers */
+        color: white; /* Gecko Browsers */
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      .display_module {
+        width: 1000px;
+        color: #292929;
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .ctrl_bar {
+        height: 60px;
+        width: 100%;
+        border: 2px solid #c4c4c4;
+        border-top: none;
+        vertical-align: middle;
+        line-height: 55px;
+        margin-bottom: 20px;
+        position: absolute;
+        -webkit-box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.14);
+        -moz-box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.14);
+        box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.14);
+      }
+
+      .ctrl_bar * {
+        margin: 0 1em;
+      }
+
+      .display_module .table_container {
+        position: absolute;
+        top: 65px;
+        height: calc(100vh - 100px);
+        width: 100%;
+        overflow-y: scroll;
+      }
+
+      table {
+        text-align: left;
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      table td,
+      th {
+        padding: 0.2em;
+        padding-left: 2em;
+        position: relative;
+      }
+
+      th:hover {
+        cursor: pointer;
+        color: rgb(255, 125, 14);
+        border-bottom: 1px solid rgb(255, 125, 14);
+      }
+
+      td:first-child,
+      th:first-child {
+        padding-left: 10px;
+      }
+
+      td:nth-child(2),
+      th:nth-child(2) {
+        padding-left: 10px;
+      }
+
+      td:last-child,
+      th:last-child {
+        padding-right: 10px;
+      }
+
+      th.on {
+        background: rgba(232, 107, 0, 0.3);
+        border-color: rgba(232, 107, 0, 0.3);
+      }
+
+      table td {
+        border-bottom: 3px solid white;
+      }
+
+      table th {
+        border-bottom: 1px solid black;
+        padding-bottom: 0.5em;
+        padding-right: 1em;
+      }
+
+      tr:hover {
+        background: rgba(232, 107, 0, 0.12);
+      }
+
+      .selected {
+        background: rgba(40, 75, 131, 0.08);
+        color: #3951d6;
+      }
+
+      #download_form {
+        font-size: 12px;
+      }
+
+      #download_form,
+      #add_compound_form {
+        padding: 1em;
+        background: white;
+        border: 1px solid black;
+        width: 400px;
+
+        display: none;
+        -webkit-box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.34);
+        -moz-box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.34);
+        box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.34);
+        opacity: 0.9;
+      }
+
+      #download_form > div:nth-child(1),
+      #add_compound_form > div:nth-child(1) {
+        font-size: 20px;
+
+        margin-bottom: 1em;
+        padding: 0.3em;
+      }
+
+      select,
+      button {
+        margin-right: 1em;
+      }
+
+      input {
+        padding: 0.2em;
+        font-weight: bolder;
+      }
+
+      #column_order {
+        margin-top: 1em;
+        height: 30px;
+        width: 100%;
+        line-height: 30px;
+        vertical-align: middle;
+      }
+
+      #column_order > div {
+        display: inline-block;
+        float: left;
+        margin: 0.5em;
+        background: black;
+        padding: 0.3em;
+        padding-left: 1em;
+        padding-right: 1em;
+        color: white;
+        font-size: 11px;
+        line-height: 20px;
+      }
+
+      #button_row {
+        height: 40px;
+        line-height: 40px;
+        vertical-align: middle;
+      }
+
+      #add_compound_form {
+        width: 730px;
+        font-size: 13px;
+      }
+
+      #add_compound_form input[type="text"] {
+        width: 5em;
+        margin-right: 1.7em;
+        padding: 0.2em;
+      }
+
+      #add_compound_form input[type="text"].long {
+        width: 10em;
+      }
+
+      .active {
+        display: block !important;
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 300px;
+        z-index: 1000;
+        outline: 1px solid white;
+      }
+
+      #formula_hint {
+        position: absolute;
+        z-index: 2000;
+        background: black;
+        color: white;
+        padding: 0.4em;
+        display: none;
+        font-size: 14px;
+      }
+
+      #formula_hint img {
+        display: none;
+        opacity: 0.85;
+        border: 1px solid black;
+      }
+
+      .visible {
+        display: block !important;
+        visibility: visible !important;
+      }
+
+      #formula_hint:hover {
+        background: gray;
+        cursor: pointer;
+      }
+
+      #formula_hint:hover img {
+        display: block;
+      }
+
+      #molecule_preview {
+        position: absolute;
+        right: 102%;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      #row_count {
+        position: absolute;
+        right: 2em;
+        font-weight: bolder;
+        color: white;
+        padding: 0.2em 1em;
+        background: #b4b4b4;
+      }
+
+      #map_view {
+        position: fixed;
+        width: 700px;
+        height: 500px;
+        top: 50%;
+        left: 50%;
+        background: #6d7d82;
+        transform: translate(-50%, -50%);
+        z-index: 4000;
+        border: 20px solid #6d7d82;
+        outline: 4px solid white;
+        visibility: hidden;
+        opacity: 0.95;
+        -webkit-box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.34);
+        -moz-box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.34);
+        box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.34);
+      }
+
+      #map_view .ctrl_bar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 30px;
+        line-height: 20px;
+        border-color: white;
+      }
+
+      #map_view .map {
+        position: absolute;
+        left: 0;
+        top: 30px;
+        width: 100%;
+        height: 440px;
+        overflow: hidden;
+      }
+
+      #map_view .map::before {
+        content: "m/z";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        color: white;
+        font-size: 10px;
+      }
+
+      #map_view .map::after {
+        content: "rt (min)";
+        position: absolute;
+        left: 50%;
+        bottom: -2px;
+        transform: translateX(-50%);
+        color: white;
+        font-size: 10px;
+      }
+
+      #map_view .map > .point {
+        position: absolute;
+        height: 6px;
+        width: 6px;
+        border-radius: 8px;
+        border: 1px solid white;
+      }
+
+      #map_view .map > .point:hover::before {
+        content: attr(data-name);
+
+        position: absolute;
+        bottom: calc(100% + 6px);
+        left: 50%;
+        transform: translateX(-50%);
+
+        font-size: 12px;
+
+        background: #ffffff;
+        padding: 0.2em;
+        text-align: center;
+        white-space: nowrap;
+        z-index: 100000;
+      }
+
+      #map_view .map > .point:hover::after {
+        content: "";
+
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 50%;
+        transform: translateX(-50%);
+
+        width: 1px;
+        background: white;
+        height: 600px;
+      }
+
+      #map_view .map > .point:hover {
+        background: #6aafc4;
+        cursor: pointer;
+      }
+
+      #map_view .x_axis {
+        position: absolute;
+        top: 94%;
+        width: 100%;
+        left: 0;
+        font-size: 8px;
+        color: white;
+      }
+
+      #map_view .x_tick {
+        position: absolute;
+        transform: translateX(-50%);
+      }
+
+      a {
+        text-decoration: none;
+        font-weight: bolder;
+        color: black;
+      }
+
+      a:hover {
+        color: #e86b00;
+      }
+
+      #molecule_preview_floating {
+        position: fixed;
+        z-index: 9999;
+        transform: translate(-115%, -50%);
+        -webkit-box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.14);
+        -moz-box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.14);
+        box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.14);
+        border: 1px solid black;
+        opacity: 0.8;
+      }
+
+      @media print {
+        * {
+          font-size: 11px;
+        }
+
+        .ctrl_bar {
+          box-shadow: none;
+          border: none;
+          height: 30px;
+          line-height: 30px;
+          margin-bottom: 10px;
+          width: 70% !important;
+          left: 50%;
+          transform: translate(-50%, 0);
+        }
+
+        #row_count {
+          right: 1em;
+        }
+
+        .ctrl_bar button {
+          display: none;
+        }
+
+        .table_container {
+          height: auto !important;
+          width: 70% !important;
+          left: 50%;
+          transform: translate(-50%, 0);
+          top: 40px !important;
+        }
+
+        .table_container input {
+          display: none;
+        }
+
+        table td,
+        table th {
+          padding: 0.3em !important;
+          padding-left: 1em !important;
+          border-bottom: 1px solid #bababa !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="download_form">
+      <div>Download CSV List</div>
+
+      <div>
+        <select id="ion_mode_select">
+          <option>negative</option>
+          <option>positive</option>
+        </select>
+
+        <select id="subset_select">
+          <option>all</option>
+          <option>selected only</option>
+          <option>verified only</option>
+        </select>
+
+        <select id="iso_select">
+          <option>C13 isotopomers</option>
+          <option>N15 isotopomers</option>
+          <option>D isotopomers</option>
+          <option>M0 only</option>
+        </select>
+      </div>
+      <div style="margin-top: 1em; border-top: 1px solid black"></div>
+
+      <div id="column_order">
+        <div data-ix="index">index</div>
+        <div data-ix="name">name</div>
+        <div data-ix="formula">formula</div>
+        <div data-ix="mz">mz</div>
+        <div data-ix="rt">rt</div>
+      </div>
+
+      <div style="margin-top: 1em; border-top: 1px solid black"></div>
+
+      <div style="margin-top: 1em">
+        mass distance (ppm)
+        <input
+          type="number"
+          id="ppm_d"
+          style="margin-left: 0.6em; width: 4em; margin-right: 2em"
+          min="5"
+          value="15"
+        />
+        rt (min)
+        <input
+          type="number"
+          id="rt_d"
+          style="margin-left: 0.6em; width: 4em"
+          value="0.4"
+          min="0.1"
+        />
+      </div>
+
+      <div style="margin: 1em 0; border-top: 1px solid black"></div>
+
+      <div id="name_row">
+        filename:
+        <input
+          type="text"
+          id="download_name"
+          style="margin-left: 0.6em; width: 20em"
+          value="[DATE]_[COLUMN]_ms1_rt_[ISO]_[POL]"
+        />
+      </div>
+
+      <div style="margin-top: 1em; border-top: 1px solid black"></div>
+      <div id="button_row">
+        <button class="download_button">download</button>
+        <button class="close_button">cancel</button>
+      </div>
+    </div>
+    <div id="add_compound_form">
+      <div>Add New Compound</div>
+      <div>
+        <select>
+          <option>negative</option>
+          <option>positive</option>
+        </select>
+
+        name:
+        <input type="text" class="long" id="name" style="width: 15em" />
+        formula: <input type="text" class="long" id="formula" /> rt:
+        <input type="text" id="rt" />
+      </div>
+
+      <div
+        style="
+          margin-top: 1.5em;
+          border-top: 1px solid black;
+          padding-top: 1.5em;
+        "
+      >
+        mz_neg: <input type="text" id="mz_neg" /> mz_pos:
+        <input type="text" id="mz_pos" />
+
+        <button class="auto_mass" style="margin-right: 5em">auto mass</button>
+        verified:<input
+          type="checkbox"
+          id="verified"
+          style="margin-right: 5em"
+        />
+        <button class="add_button">add</button>
+        <button class="close_button">close</button>
+      </div>
+    </div>
+    <div id="formula_hint">
+      <span></span>
+      <img id="molecule_preview" />
+    </div>
+
+    <div id="map_view">
+      <div class="ctrl_bar">
+        <select id="polarity_select">
+          <option>negative mode</option>
+          <option>positive mode</option>
+        </select>
+        <span
+          id="num_indicator"
+          style="color: white; position: absolute; right: 1em"
+        ></span>
+      </div>
+      <div class="map"></div>
+    </div>
+
+    <img id="molecule_preview_floating" />
+  </body>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+  <script src="mass_calculator.min.js"></script>
+  <script src="CSVTable.js"></script>
+  <script>
+    function GET_ACTIVE_DATABASE() {
+      var active_option = $(".db_option option:selected").text();
+
+      if (active_option == "ZIC pHILIC") return "zic_philic";
+      else if (active_option == "Luna NH2") return "luna_nh2";
+      return "";
+    }
+
+    function PPM_DISTANCE(mz1, mz2) {
+      return (1e6 * Math.abs(mz1 - mz2)) / Math.max(mz1, mz2);
+    }
+
+    function CURRENT_DATE_STRING(type) {
+      var today = new Date();
+      var month = today.getMonth() + 1;
+      if (month < 10) month = "0" + month;
+      var day = today.getDate();
+      if (day < 10) day = "0" + day;
+
+      if (type == undefined) return today.getFullYear() + "" + month + "" + day;
+
+      return month + "/" + day + "/" + today.getFullYear();
+    }
+
+    function CompoundTable() {
+      var _this = this;
+      this.row_data = [];
+
+      this.init = function () {
+        this.base_node = $("<div class = 'display_module'>");
+        this.base_node.on("click", function (e) {
+          e.stopPropagation();
+        });
+
+        this.ctrl_bar = $("<div class = 'ctrl_bar'></div>");
+
+        var table_select = $("<select class = 'db_option'>");
+        table_select.append("<option>ZIC pHILIC</option>");
+        table_select.append("<option>Luna NH2</option>");
+        table_select.on("change", function () {
+          _this.refresh();
+        });
+        this.ctrl_bar.append(table_select);
+
+        var add_cmpd_button = $(
+          "<button class = 'add_cmpd_button'>add new compound</button>"
+        );
+        add_cmpd_button.on("click", function (e) {
+          var form = $("#add_compound_form");
+          form.addClass("active");
+          form.find("#name").focus();
+
+          e.stopPropagation();
+        });
+        this.ctrl_bar.append(add_cmpd_button);
+
+        var download_button = $(
+          "<button class = 'download_button'>download</button>"
+        );
+        download_button.on("click", function (e) {
+          var form = $("#download_form");
+          form.addClass("active");
+
+          e.stopPropagation();
+        });
+        this.ctrl_bar.append(download_button);
+
+        var view_map_button = $(
+          "<button class = 'view_map_button'>view map</button>"
+        );
+        view_map_button.on("click", function (e) {
+          MAP_VIEW.refresh();
+          MAP_VIEW.show();
+        });
+        this.ctrl_bar.append(view_map_button);
+
+        var row_count = $("<span id = 'row_count'></span>");
+        this.ctrl_bar.append(row_count);
+
+        this.base_node.append(this.ctrl_bar);
+
+        var div = $("<div class = 'table_container'>");
+
+        this.table_node = $("<table>");
+
+        div.append(this.table_node);
+        this.base_node.append(div);
+        this.addHeaders();
+      };
+
+      this.addHeaders = function () {
+        var html = "<tr id = 'header_row'>";
+        html += "<th></th>";
+        html += "<th>name</th>";
+        html += "<th>formula</th>";
+        html += "<th>ion mode</th>";
+        html += "<th>neg mz</th>";
+        html += "<th>pos mz</th>";
+        html += "<th>rt</th>";
+        html += "<th>verified</th>";
+
+        html += "</tr>";
+
+        this.table_node.append(html);
+
+        this.table_node.find("th").each(function (index, object) {
+          $(this).on("click", function () {
+            var direction = $(this).attr("data-direction");
+
+            _this.table_node
+              .find("th")
+              .attr("data-direction", "")
+              .removeClass("on");
+
+            if (direction == "asc") direction = "desc";
+            else direction = "asc";
+
+            $(this).attr("data-direction", direction).addClass("on");
+
+            _this.headerWithIndexWasClicked(index, direction);
+          });
+        });
+      };
+
+      this.headerWithIndexWasClicked = function (index, direction) {
+        var rows = this.table_node.find("tr[id !='header_row']");
+
+        index++;
+
+        rows.find(":nth-child(" + index + ")").addClass("on");
+
+        rows.detach().sort(function (a, b) {
+          var a_child = $(a).find(":nth-child(" + index + ")");
+          if (a_child.children().length > 0) {
+            a_child = a_child.children(":nth-child(1)");
+          }
+
+          var b_child = $(b).find(":nth-child(" + index + ")");
+          if (b_child.children().length > 0) {
+            b_child = b_child.children(":nth-child(1)");
+          }
+
+          var a_value = a_child.html().toLowerCase(),
+            b_value = b_child.html().toLowerCase();
+
+          if (isNumber(a_value)) a_value = parseFloat(a_value);
+          if (isNumber(b_value)) b_value = parseFloat(b_value);
+
+          if (direction == "asc") return a_value > b_value ? 1 : -1;
+          else return a_value > b_value ? -1 : 1;
+        });
+
+        this.table_node.append(rows);
+      };
+
+      this.addToNode = function (node) {
+        node.append(this.base_node);
+      };
+
+      this.refresh = function (params) {
+        this.row_data = [];
+        this.table_node.html("");
+        this.addHeaders();
+
+        this.updateCountViewer();
+
+        this.performServerRequest({
+          database_name: GET_ACTIVE_DATABASE(),
+          action: "retrieve_rows",
+        });
+      };
+
+      this.updateCountViewer = function () {
+        var selected = this.base_node.find(".selected").length;
+
+        if (selected > 0) {
+          this.base_node
+            .find("#row_count")
+            .html(selected + " / " + this.row_data.length);
+        } else {
+          this.base_node.find("#row_count").html(this.row_data.length);
+        }
+      };
+
+      this.performServerRequest = function (request_object) {
+        var f_data = new FormData();
+        f_data.append("query", JSON.stringify(request_object));
+
+        $.ajax({
+          url: "ms1_rt_database.php",
+          type: "POST",
+          contentType: false,
+          processData: false,
+          data: f_data,
+          timeout: 3000,
+          success: function (response) {
+            if (response.success_code == 1)
+              _this.didRecieveRowData(response.data);
+          },
+          error: function (jqXHR, textStatus, errorThrown) {},
+          fail: function () {},
+        });
+      };
+
+      this.didRecieveRowData = function (rows) {
+        for (var row of rows) {
+          this.addRowWithData(row);
+        }
+
+        this.doneAddingRows();
+      };
+
+      this.addRowWithData = function (data) {
+        this.row_data.push(data);
+        data.selected = false;
+        this.updateCountViewer();
+
+        for (var key in data) {
+          if (data[key] == null) data[key] = "";
+        }
+
+        var html = "<tr>";
+        html += '<td><input type="checkbox"></td>';
+
+        if (data.pubchem_id == "") {
+          html += "<td>" + data.name + "</td>";
+        } else {
+          html +=
+            '<td><a class = "linked_name" data-cid="' +
+            data.pubchem_id +
+            '" target = "_blank" href="' +
+            "https://pubchem.ncbi.nlm.nih.gov/compound/" +
+            data.pubchem_id +
+            '">' +
+            data.name +
+            "</a></td>";
+        }
+
+        html += "<td>" + data.formula + "</td>";
+        html += "<td>" + data.dominant_ion_mode + "</td>";
+        html += "<td>" + data.negative_mz + "</td>";
+        html += "<td>" + data.positive_mz + "</td>";
+        html += "<td>" + data.rt + "</td>";
+        html += "<td>" + data.rt_verified_by_std + "</td>";
+
+        html += "</tr>";
+
+        var row = $(html);
+        row.find("input[type='checkbox']").on("change", function () {
+          if ($(this).prop("checked") == false) {
+            data.selected = false;
+            $(this).parent().parent().removeClass("selected");
+          } else {
+            data.selected = true;
+            $(this).parent().parent().addClass("selected");
+          }
+
+          this.updateCountViewer();
+        });
+
+        this.table_node.append(row);
+      };
+
+      this.doneAddingRows = function () {
+        $(".linked_name").on("mouseover", function () {
+          var image_url =
+            "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/";
+          image_url += $(this).attr("data-cid");
+          image_url += "/PNG";
+          image_url = encodeURI(image_url);
+
+          var bbox = $(this)[0].getBoundingClientRect();
+
+          var y = bbox.top + 0.5 * bbox.height;
+
+          var viewportHeight = $(window).height();
+
+          if (y + 250 > viewportHeight) y = viewportHeight - 250;
+
+          $("#molecule_preview_floating").css({
+            top: y + "px",
+            left: bbox.left + "px",
+            width: "250px",
+          });
+          $("#molecule_preview_floating").attr("src", image_url);
+        });
+
+        $(".linked_name").on("mouseout", function () {
+          $("#molecule_preview_floating").attr("src", null);
+          $("#molecule_preview_floating").css({ left: "-1000px" });
+        });
+
+        MAP_VIEW.refresh();
+      };
+
+      this.getRowsWithFilters = function (filter) {
+        var filtered_rows = [];
+        var index = 0;
+
+        for (var row of this.row_data) {
+          if (this.doesRowMatchFilter(row, filter)) {
+            index++;
+
+            let row_copy = Object.assign({}, row);
+
+            row_copy.index = index;
+            filtered_rows.push(row_copy);
+          }
+        }
+
+        return filtered_rows;
+      };
+
+      this.doesRowMatchFilter = function (row_data, filter) {
+        if (filter.name != undefined && filter.name != row_data.name)
+          return false;
+        if (filter.formula != undefined && filter.formula != row_data.formula)
+          return false;
+        if (
+          filter.ion_mode != undefined &&
+          filter.ion_mode != row_data.dominant_ion_mode
+        )
+          return false;
+
+        if (filter.subset_mode == "V") {
+          if (row_data.rt_verified_by_std == 0) return false;
+        }
+        if (filter.subset_mode == "S") {
+          if (row_data.selected == false) return false;
+        }
+
+        return true;
+      };
+    }
+
+    var COMPOUND_TABLE = new CompoundTable();
+    COMPOUND_TABLE.init();
+    COMPOUND_TABLE.addToNode($("body"));
+    COMPOUND_TABLE.refresh();
+
+    var ADD_COMPOUND_FORM = $("#add_compound_form");
+    ADD_COMPOUND_FORM.on("click", function (e) {
+      e.stopPropagation();
+    });
+    ADD_COMPOUND_FORM.find(".add_button").on("click", function () {
+      var mode = "pos";
+      if (ADD_COMPOUND_FORM.find("select option:selected").text() == "negative")
+        mode = "neg";
+
+      var name = ADD_COMPOUND_FORM.find("#name").val().trim();
+      if (name.length == 0) return;
+
+      var cid = ADD_COMPOUND_FORM.find("#name").attr("data-cid").trim();
+
+      var formula = ADD_COMPOUND_FORM.find("#formula").val().trim();
+      if (formula.length == 0) return;
+
+      var rt = parseFloat(ADD_COMPOUND_FORM.find("#rt").val().trim());
+      if (rt == 0 || rt == NaN) return;
+
+      var m_pos = parseFloat(ADD_COMPOUND_FORM.find("#mz_pos").val().trim());
+      var m_neg = parseFloat(ADD_COMPOUND_FORM.find("#mz_neg").val().trim());
+
+      if (m_neg == 0 && m_pos == 0) return;
+
+      var verified = ADD_COMPOUND_FORM.find("#verified").prop("checked");
+
+      if (verified) verified = 1;
+      else verified = 0;
+
+      var request_object = {
+        database_name: GET_ACTIVE_DATABASE(),
+        action: "add_compound",
+        data: {
+          ion_mode: mode,
+          name: name,
+          formula: formula,
+          pos_mz: m_pos,
+          neg_mz: m_neg,
+          rt: rt,
+          rt_verified: verified,
+          pubchem_id: cid,
+        },
+      };
+
+      var f_data = new FormData();
+      f_data.append("query", JSON.stringify(request_object));
+
+      $.ajax({
+        url: "ms1_rt_database.php",
+        type: "POST",
+        contentType: false,
+        processData: false,
+        data: f_data,
+        timeout: 3000,
+        success: function (response) {
+          COMPOUND_TABLE.refresh();
+        },
+        error: function (jqXHR, textStatus, errorThrown) {},
+        fail: function () {},
+      });
+    });
+    ADD_COMPOUND_FORM.find(".close_button").on("click", function () {
+      ADD_COMPOUND_FORM.removeClass("active");
+      $("#formula_hint").css({ left: "-1000px" });
+    });
+    ADD_COMPOUND_FORM.find("#formula").on("change", function (e) {
+      var formula = $(this).val();
+      ADD_COMPOUND_FORM.find("#mz_pos").val(exact_mass(formula, {}, "+H"));
+      ADD_COMPOUND_FORM.find("#mz_neg").val(exact_mass(formula, {}, "-H"));
+    });
+    ADD_COMPOUND_FORM.find("#name").on("keypress", function (e) {
+      if (e.which != 13) return;
+
+      var name_field = $(this);
+
+      var text = $(this).val();
+
+      var req_url = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/";
+      req_url += text;
+      req_url += "/property/MolecularFormula/JSON";
+
+      $.ajax({
+        url: encodeURI(req_url),
+        dataType: "json",
+        success: function (result) {
+          var props = result.PropertyTable.Properties[0];
+
+          var hint_box = $("#formula_hint");
+
+          var bbox = name_field[0].getBoundingClientRect();
+
+          hint_box.find("span").html(props.MolecularFormula);
+          hint_box.css({
+            top: bbox.top + 24 + "px",
+            left: bbox.left + "px",
+            width: bbox.width + "px",
+          });
+          hint_box.addClass("visible");
+          hint_box.attr("data-cid", props.CID);
+
+          var image_url =
+            "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/";
+          image_url += props.CID;
+          image_url += "/PNG";
+          image_url = encodeURI(image_url);
+
+          $("#molecule_preview").attr("src", image_url);
+        },
+        error: function () {
+          $("#formula_hint").removeClass("visible");
+        },
+      });
+    });
+
+    $("#formula_hint").on("click", function (e) {
+      ADD_COMPOUND_FORM.find("#formula").val($(this).find("span").html());
+      var formula = $(this).find("span").html();
+
+      ADD_COMPOUND_FORM.find("#mz_pos").val(exact_mass(formula, {}, "+H"));
+      ADD_COMPOUND_FORM.find("#mz_neg").val(exact_mass(formula, {}, "-H"));
+      $("#formula_hint").removeClass("visible");
+      e.stopPropagation();
+
+      ADD_COMPOUND_FORM.find("#name").attr(
+        "data-cid",
+        $(this).attr("data-cid")
+      );
+    });
+
+    var DOWNLOAD_FORM = $("#download_form");
+
+    $("#column_order").sortable({ revert: true });
+
+    DOWNLOAD_FORM.on("click", function (e) {
+      e.stopPropagation();
+    });
+    DOWNLOAD_FORM.find(".download_button").on("click", function () {
+      var filter = {};
+      var ion_mode = DOWNLOAD_FORM.find(
+        "#ion_mode_select option:selected"
+      ).text();
+      if (ion_mode == "negative") filter.ion_mode = "neg";
+      else filter.ion_mode = "pos";
+
+      var subset_mode = DOWNLOAD_FORM.find(
+        "#subset_select option:selected"
+      ).text();
+      if (subset_mode == "all") filter.subset_mode = "A";
+      else if (subset_mode == "selected only") filter.subset_mode = "S";
+      else if (subset_mode == "verified only") filter.subset_mode = "V";
+
+      var iso_mode = DOWNLOAD_FORM.find("#iso_select option:selected").text();
+      if (iso_mode == "C13 isotopomers") iso_mode = "C13";
+      else if (iso_mode == "N15 isotopomers") iso_mode = "N15";
+      else if (iso_mode == "D isotopomers") iso_mode = "D";
+      else iso_mode = "M0";
+
+      var entries = COMPOUND_TABLE.getRowsWithFilters(filter);
+      console.log(entries);
+
+      var ppm_d = parseFloat($("#ppm_d").val()),
+        rt_d = parseFloat($("#rt_d").val());
+
+      var compounds = [];
+
+      for (var i = 0; i < entries.length; i++) {
+        var e = entries[i];
+
+        if (e.added) continue;
+        e.added = true;
+
+        var mz = parseFloat(
+            filter.ion_mode == "neg" ? e.negative_mz : e.positive_mz
+          ),
+          rt = parseFloat(e.rt);
+        var compound = { name: e.name, formula: e.formula, mz: mz, rt: rt };
+
+        for (var j = i + 1; j < entries.length; j++) {
+          var e2 = entries[j];
+          if (e2.added) continue;
+
+          var mz_2 = parseFloat(
+              filter.ion_mode == "neg" ? e2.negative_mz : e2.positive_mz
+            ),
+            rt_2 = parseFloat(e2.rt);
+
+          if (PPM_DISTANCE(mz, mz_2) < ppm_d && Math.abs(rt - rt_2) < rt_d) {
+            compound.name += " / " + e2.name;
+            e2.added = true;
+          }
+        }
+
+        compounds.push(compound);
+      }
+
+      var ix = 0;
+
+      var columns = [];
+      $("#column_order")
+        .children()
+        .each(function (index, element) {
+          columns.push($(this).attr("data-ix"));
+        });
+
+      var csv_table = new CSVTable();
+      csv_table.addRowData(columns);
+
+      if (iso_mode != "M0") {
+        for (var cpd of compounds) {
+          var formula = formula_from_str(cpd.formula);
+          var mass = cpd.mz;
+          var num_carbons = formula["C"];
+          if (num_carbons == undefined) num_carbons = 0;
+
+          for (var c13_num = 0; c13_num <= num_carbons; c13_num++) {
+            var csv_row = [];
+            ix++;
+
+            for (var c of columns) {
+              if (c == "index") csv_row.push(ix);
+              else if (c == "name") csv_row.push(cpd.name + " M" + c13_num);
+              else if (c == "formula") csv_row.push(cpd.formula);
+              else if (c == "mz") csv_row.push(mass);
+              else if (c == "rt") csv_row.push(cpd.rt);
+            }
+
+            if (iso_mode == "C13") mass += 1.003355;
+            else if (iso_mode == "N15") mass += 0.997035;
+            else if (iso_mode == "D") mass += 1.006277;
+
+            csv_table.addRowData(csv_row);
+          }
+        }
+      } else if (iso_mode == "N15") {
+      }
+      if (iso_mode == "M0") {
+        for (var cpd of compounds) {
+          var csv_row = [];
+          ix++;
+
+          for (var c of columns) {
+            if (c == "index") csv_row.push(ix);
+            else if (c == "name") csv_row.push(cpd.name);
+            else if (c == "formula") csv_row.push(cpd.formula);
+            else if (c == "mz") csv_row.push(cpd.mz);
+            else if (c == "rt") csv_row.push(cpd.rt);
+          }
+          csv_table.addRowData(csv_row);
+        }
+      } else {
+        var element_name = "";
+
+        if (iso_mode == "C13") element_name = "C";
+        else if (iso_mode == "N15") element_name = "N";
+
+        var mass_diff = MASS_LIST[element_name + "*"] - MASS_LIST[element_name];
+
+        for (var cpd of compounds) {
+          var formula = formula_from_str(cpd.formula);
+          var mass = cpd.mz;
+          var num_el = formula[element_name];
+          if (num_el == undefined) num_el = 0;
+
+          for (var n = 0; n <= num_el; n++) {
+            var csv_row = [];
+            ix++;
+
+            for (var c of columns) {
+              if (c == "index") csv_row.push(ix);
+              else if (c == "name") csv_row.push(cpd.name + " M" + n);
+              else if (c == "formula") csv_row.push(cpd.formula);
+              else if (c == "mz") csv_row.push(mass);
+              else if (c == "rt") csv_row.push(cpd.rt);
+            }
+
+            mass += mass_diff;
+
+            csv_table.addRowData(csv_row);
+          }
+        }
+      }
+
+      var name = $("#download_name").val().split(".csv").join("");
+      name = name.replace("[POL]", filter.ion_mode);
+      name = name.replace("[DATE]", CURRENT_DATE_STRING());
+      name = name.replace("[COLUMN]", GET_ACTIVE_DATABASE());
+      name = name.replace("[ISO]", iso_mode);
+
+      csv_table.downloadAs(name + ".csv");
+    });
+    DOWNLOAD_FORM.find(".close_button").on("click", function () {
+      DOWNLOAD_FORM.removeClass("active");
+    });
+
+    $("body").on("click", function () {
+      ADD_COMPOUND_FORM.removeClass("active");
+      DOWNLOAD_FORM.removeClass("active");
+      MAP_VIEW.hide();
+      $("#formula_hint").css({ left: "-1000px" });
+    });
+
+    function MapView(node) {
+      var _this = this;
+      this.base_node = node;
+      this.base_node.on("click", function (e) {
+        e.stopPropagation();
+      });
+      this.x_range = { min: 0, max: 30 };
+      this.y_range = { min: 0, max: 800 };
+      this.width = this.base_node.find(".map")[0].getBoundingClientRect().width;
+      this.height = this.base_node
+        .find(".map")[0]
+        .getBoundingClientRect().height;
+
+      this.mode = "neg";
+
+      this.base_node.find("#polarity_select").on("change", function () {
+        var txt = $(this).find("option:selected").text();
+
+        if (txt == "negative mode") _this.mode = "neg";
+        else _this.mode = "pos";
+
+        _this.refresh();
+      });
+
+      this.clear = function () {
+        this.base_node.find(".map").html("");
+      };
+
+      this.refresh = function () {
+        this.clear();
+        var rows = COMPOUND_TABLE.getRowsWithFilters({ ion_mode: this.mode });
+
+        if (this.mode == "pos") {
+          for (var row of rows)
+            this.addPoint({ x: row.rt, y: row.positive_mz, name: row.name });
+        } else {
+          for (var row of rows)
+            this.addPoint({ x: row.rt, y: row.negative_mz, name: row.name });
+        }
+
+        this.addAxis();
+
+        $("#num_indicator").html(rows.length);
+      };
+
+      this.addAxis = function () {
+        var x_axis = $("<div>");
+        x_axis.addClass("x_axis");
+
+        for (var i = this.x_range.min; i <= this.x_range.max; i++) {
+          var point = $("<div>");
+          point.addClass("x_tick");
+          point.html(i);
+
+          var x_px =
+            ((i - this.x_range.min) * this.width) /
+            (this.x_range.max - this.x_range.min);
+          point.css({ left: x_px + "px" });
+          x_axis.append(point);
+        }
+        this.base_node.find(".map").append(x_axis);
+      };
+
+      this.setXRange = function (range) {
+        this.x_range = range;
+      };
+
+      this.setYRange = function (range) {
+        this.y_range = range;
+      };
+
+      this.addPoint = function (point) {
+        var x_px =
+          ((point.x - this.x_range.min) * this.width) /
+          (this.x_range.max - this.x_range.min);
+        var y_px =
+          ((point.y - this.y_range.min) * this.height) /
+          (this.y_range.max - this.y_range.min);
+
+        var dot = $("<div class='point'>");
+        dot.css({ left: x_px + "px", bottom: y_px + "px" });
+        dot.attr("data-name", point.name);
+        this.base_node.find(".map").append(dot);
+      };
+
+      this.show = function () {
+        this.base_node.addClass("visible");
+      };
+
+      this.hide = function () {
+        this.base_node.removeClass("visible");
+      };
+    }
+
+    var MAP_VIEW = new MapView($("#map_view"));
+    MAP_VIEW.clear();
+  </script>
+</html>
