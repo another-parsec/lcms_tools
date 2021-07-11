@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>MetaboQ</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        user-select: none;
+        -webkit-user-select: none;
+        font-family: "Helvetica", sans-serif;
+      }
+
+      input {
+        user-select: auto !important;
+        -webkit-user-select: auto !important;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      body.overlay::after {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 100;
+      }
+
+      table {
+        border-collapse: collapse;
+      }
+
+      /* Instructions for table header and data display */
+      th,
+      td {
+        padding: 10px;
+        padding-right: 15px;
+        min-width: 150px;
+        max-width: 300px;
+      }
+
+      th {
+        padding-bottom: 15px;
+        border-bottom: 2px solid black;
+        vertical-align: center;
+      }
+
+      /* Instructions for table data display */
+      td {
+        padding-bottom: 20px;
+        vertical-align: top;
+        border-bottom: 1px solid #afafaf;
+      }
+
+      tr input[type="checkbox"] {
+        display: none;
+      }
+
+      tr.editable input[type="checkbox"] {
+        display: inline;
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      th:first-child,
+      td:first-child {
+        padding-right: 25px;
+        min-width: 20px;
+        max-width: 20px;
+      }
+
+      th:last-child,
+      td:last-child {
+        padding-right: 5px;
+      }
+
+      th:hover {
+        cursor: pointer;
+        background: #eaeaea;
+      }
+
+      .header_row th {
+        text-align: left;
+      }
+
+      .rw {
+        width: 80%;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      #info_bar span span {
+        margin-right: 16px;
+        font-weight: bolder;
+      }
+
+      #info_bar {
+        border-bottom: 1px solid black;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+      }
+
+      #button_bar button {
+        margin-right: 15px;
+        margin-bottom: 15px;
+      }
+
+      #control_area {
+        position: fixed;
+        top: 0;
+        background: #d6d6d6;
+        width: 100%;
+        left: 0;
+        padding: 10px;
+        padding-bottom: 0;
+        z-index: 100;
+      }
+
+      #control_area h1 {
+        margin-bottom: 20px;
+      }
+
+      #button_bar {
+        position: relative;
+      }
+
+      #run_section {
+        position: absolute;
+        right: 0;
+        top: 0;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #queue {
+        margin-top: 180px;
+        position: relative;
+      }
+
+      tr.in_move_mode {
+        background: #cecece;
+      }
+
+      tr.selected {
+        color: #1830b7;
+        font-weight: bold;
+      }
+
+      #queue.drag_occuring tr.mousein.target_top {
+        border-top: 3px solid #1830b7;
+      }
+
+      #queue.drag_occuring tr.mousein.target_bottom {
+        border-bottom: 3px solid #1830b7;
+      }
+
+      #queue.drag_occuring td {
+        border-color: transparent;
+      }
+
+      #queue[data-state]::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        padding: 10px;
+        background: black;
+        color: white;
+        z-index: 50;
+        background: rgba(255, 255, 255, 0.49);
+        display: none;
+      }
+
+      #queue[data-state]::after {
+        content: "";
+        position: absolute;
+        top: 20%;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 20px;
+        background: black;
+        color: white;
+        z-index: 51;
+        display: none;
+      }
+
+      #queue[data-state*="_error"]::before,
+      #queue[data-state*="_error"]::after {
+        display: block;
+      }
+
+      #queue[data-state="network_error"]::after {
+        content: "A network error occurred.";
+      }
+
+      #queue[data-state="server_error"]::after {
+        content: "A server error occurred.";
+      }
+
+      #queue[data-state="loading_data"]::after {
+        content: "Loading data please wait.";
+      }
+
+      #queue a {
+        pointer-events: none;
+        text-decoration: none;
+        color: black;
+      }
+
+      #queue a[href*=".csv"] {
+        color: blue;
+        pointer-events: all;
+        text-decoration: underline;
+      }
+
+      #row_drag_icon {
+        width: 200px;
+        padding: 10px;
+        background: white;
+        border: 1px solid black;
+        font-weight: bold;
+        position: fixed;
+        -webkit-box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.4);
+        -moz-box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.4);
+        box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.4);
+        pointer-events: none;
+      }
+
+      #new_sample_form {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        width: 30em;
+        transform: translate(-50%, -50%);
+        z-index: 101;
+        padding: 20px;
+        padding-top: 10px;
+        background: white;
+        border: 1px solid black;
+        -webkit-box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.4);
+        -moz-box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.4);
+        box-shadow: 0px 3px 12px 0px rgba(0, 0, 0, 0.4);
+
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .visible {
+        opacity: 1 !important;
+        pointer-events: all !important;
+      }
+
+      #new_sample_form div {
+        margin-bottom: 20px;
+      }
+
+      #new_sample_form label {
+        display: inline-block;
+        margin-right: 10px;
+        width: calc(40% - 10px);
+        text-align: right;
+      }
+
+      #new_sample_form button {
+        height: 2em;
+      }
+
+      #disclaimer {
+        width: 100%;
+        text-align: right;
+        font-size: 12px;
+        margin-bottom: 30px !important;
+      }
+
+      #new_sample_form input,
+      #new_sample_form textarea {
+        padding: 4px;
+        width: 60%;
+        resize: none;
+        border: 1px solid #646464;
+        font-weight: bolder;
+        -webkit-user-select: all;
+        user-select: all;
+      }
+
+      input.error,
+      textarea.error {
+        border-color: red !important;
+        background: #edd4d4;
+      }
+
+      .error_console {
+        color: red;
+        font-size: 14px;
+      }
+
+      #status_bar {
+        font-weight: lighter;
+        letter-spacing: 0.5px;
+        color: white;
+        padding: 1em;
+        font-size: 14px;
+        width: 100%;
+        margin-bottom: 0.5em;
+        position: fixed;
+        top: -50px;
+        -webkit-transition: top 0.2s;
+        transition: top 0.2s;
+        z-index: 100000;
+      }
+
+      #status_bar.show {
+        top: 0px;
+      }
+
+      #status_bar.success {
+        background: #4aa24a;
+      }
+
+      #status_bar.error {
+        background: #af4949;
+      }
+
+      #run_samples_tag,
+      #queue_samples_tag {
+        padding: 0.3em;
+        color: #3c3c3c;
+      }
+
+      #run_samples_tag:hover,
+      #queue_samples_tag:hover {
+        cursor: pointer;
+        color: black;
+      }
+
+      #run_samples_tag.active,
+      #queue_samples_tag.active {
+        color: blue;
+        font-weight: bolder;
+      }
+
+      th {
+        position: relative;
+      }
+
+      th::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: 0;
+        transform: translate(-20px, -50%);
+        border: 8px solid transparent;
+      }
+
+      th[data-direction="asc"],
+      th[data-direction="desc"] {
+        background: #d1d0d0;
+      }
+
+      th::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: 0;
+        transform: translate(-20px, -50%);
+        border: 8px solid transparent;
+      }
+
+      th[data-direction="asc"]::after {
+        border-bottom-color: black;
+      }
+
+      th[data-direction="desc"]::after {
+        border-top-color: black;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="control_area">
+      <h1 class="rw">Lab Metabolomics Queue</h1>
+
+      <div class="rw" id="info_bar">
+        <span id="run_samples_tag"
+          >samples run: <span id="total_samples_run">0</span></span
+        >
+        <span id="queue_samples_tag"
+          >samples in queue:
+          <span class="queue_count" id="samples_in_queue">0</span></span
+        >
+      </div>
+      <div class="rw" id="button_bar">
+        <button id="add_new_samples_button">add new samples</button>
+        <button onclick="window.open('sample_info_site.html')">
+          generate sample datasheet
+        </button>
+        <button id="delete_selected_sample_sets_button">
+          delete selection
+        </button>
+
+        <div id="run_section">
+          <button id="mark_as_run_button">mark selection as run</button>
+          run date: <input id="run_date" type="date" />
+        </div>
+      </div>
+    </div>
+    <table class="rw" id="queue" data-state="loading_data">
+      <tr class="header_row">
+        <th></th>
+        <th>date submitted</th>
+        <th>num samples</th>
+        <th>lab</th>
+        <th>submitter</th>
+        <th>description</th>
+      </tr>
+    </table>
+
+    <div id="new_sample_form">
+      <div><h3>Add New Samples</h3></div>
+      <div class="error_console"></div>
+      <div>
+        <label>Lab name:</label
+        ><input
+          id="labname_input"
+          type="text"
+          placeholder="Christofk"
+          maxlength="99"
+        />
+      </div>
+      <div>
+        <label>Experimentor name:</label
+        ><input
+          id="sub_name_input"
+          type="text"
+          placeholder="Jane Student"
+          maxlength="99"
+        />
+      </div>
+      <div>
+        <label>Number of samples:</label
+        ><input
+          id="num_samples_input"
+          type="number"
+          value="1"
+          min="1"
+          max="200"
+        />
+      </div>
+      <div>
+        <label style="vertical-align: top">Description:</label
+        ><textarea
+          id="sample_set_desc"
+          placeholder="EX:24hr UC13 glucose tracing in A549 xenografts"
+          maxlength="300"
+        ></textarea>
+      </div>
+      <div>
+        <label>Sample datasheet:</label
+        ><input id="sample_datasheet_input" type="file" accept=".csv" />
+      </div>
+      <div id="disclaimer">
+        By pressing submit, I certify that I understand that these samples will
+        likely, but not necessarily, be run in the order that they were
+        submitted to this queue. I also affirm that all the information entered
+        on this form is accurate. Once added, sample sets can only be deleted.
+        No editing is permitted.
+      </div>
+      <div style="text-align: center">
+        <button id="cancel_button" style="margin-right: 100px">CANCEL</button
+        ><button id="submit_button">SUBMIT</button>
+      </div>
+    </div>
+
+    <div id="status_bar"></div>
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      const SERVER_URL = "metq_handler.php";
+      const STATUS_BAR = $("#status_bar");
+
+      function FLASH_STATUS_BAR(status, message) {
+        if (status == "error") {
+          STATUS_BAR.removeClass("success");
+          STATUS_BAR.addClass("error");
+        } else if (status == "success") {
+          STATUS_BAR.removeClass("error");
+          STATUS_BAR.addClass("success");
+        }
+
+        STATUS_BAR.addClass("show");
+        STATUS_BAR.html(message);
+
+        setTimeout(function () {
+          STATUS_BAR.removeClass("show");
+        }, 2000);
+      }
+
+      function GET_EDIT_KEY() {
+        var e_key = localStorage.getItem("edit_key");
+        return e_key == undefined ? "none" : e_key;
+      }
+
+      function SET_EDIT_KEY(key) {
+        localStorage.setItem("edit_key", key);
+      }
+
+      var MOUSE_TARGET_ROW = null;
+      var MOUSE_DRAG_START_POINT = null;
+
+      var ROW_DRAG_ICON = null;
+
+      var DISTANCE = function (p1, p2) {
+        return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+      };
+
+      $("body").on("mousedown", function (e) {
+        if ($("#queue").hasClass("sample_move_allowed") == false) return;
+
+        MOUSE_DRAG_START_POINT = { x: e.clientX, y: e.clientY };
+
+        $("body").on("mousemove", function (e) {
+          var CURRENT_POINT = { x: e.clientX, y: e.clientY };
+
+          if (
+            MOUSE_DRAG_START_POINT &&
+            DISTANCE(CURRENT_POINT, MOUSE_DRAG_START_POINT) > 10
+          ) {
+            if (MOUSE_TARGET_ROW != null && ROW_DRAG_ICON == null) {
+              ROW_DRAG_ICON = $('<div id = "row_drag_icon"></div>');
+              ROW_DRAG_ICON.html(
+                MOUSE_TARGET_ROW.find(".ns").html() +
+                  " / " +
+                  MOUSE_TARGET_ROW.find(".sn").html()
+              );
+
+              $("body").append(ROW_DRAG_ICON);
+              MOUSE_TARGET_ROW.addClass("in_move_mode");
+              $("#queue").addClass("drag_occuring");
+            }
+          }
+
+          if (ROW_DRAG_ICON != null) {
+            ROW_DRAG_ICON.css({ left: CURRENT_POINT.x, top: CURRENT_POINT.y });
+
+            var row = $("tr.mousein");
+            if (row.length == 0) return;
+
+            row.removeClass("target_top");
+            row.removeClass("target_bottom");
+
+            var rect = row[0].getBoundingClientRect();
+
+            if (CURRENT_POINT.y > rect.top + 0.5 * rect.height) {
+              row.addClass("target_bottom");
+            } else {
+              row.addClass("target_top");
+            }
+          }
+        });
+      });
+
+      $("body").on("mouseup", function () {
+        MOUSE_DRAG_START_POINT = null;
+        if (ROW_DRAG_ICON) {
+          var DROP_POINT = $("tr.mousein");
+          if (DROP_POINT.hasClass("target_bottom")) {
+            MOUSE_TARGET_ROW.insertAfter(DROP_POINT);
+          } else {
+            MOUSE_TARGET_ROW.insertBefore(DROP_POINT);
+          }
+
+          MOUSE_TARGET_ROW.removeClass("in_move_mode");
+          MOUSE_TARGET_ROW = null;
+          ROW_DRAG_ICON.remove();
+          ROW_DRAG_ICON = null;
+          $("#queue").removeClass("drag_occuring");
+
+          ROW_DRAG_DID_FINISH();
+        }
+
+        $("body").off("mousemove");
+      });
+
+      var MOUSE_CAME_DOWN_ON_ROW = function (row) {
+        MOUSE_TARGET_ROW = row;
+      };
+
+      function SELECT_STATE_WAS_CHANGED_FOR_ROW(row) {
+        REFRESH_QUEUE_COUNT_INDICATORS();
+      }
+
+      function Table(node) {
+        var _this = this;
+        this.node = node;
+
+        this.node.find("th").each(function (index, object) {
+          if (index == 0) return;
+
+          $(this).on("click", function () {
+            var direction = $(this).attr("data-direction");
+            _this.node.find("th").attr("data-direction", "");
+
+            direction = direction == "asc" ? "desc" : "asc";
+
+            $(this).attr("data-direction", direction);
+            _this.headerWithIndexWasClicked(index, direction);
+          });
+        });
+
+        this.headerWithIndexWasClicked = function (index, direction) {
+          var rows = this.node.find("tr[class != 'header_row']");
+
+          index++;
+          rows.find(":nth-child(" + index + ")").addClass("on");
+
+          rows.detach().sort(function (a, b) {
+            var a_child = $(a).find(":nth-child(" + index + ")");
+            if (a_child.children().length > 0) {
+              a_child = a_child.children(":nth-child(1)");
+            }
+
+            var b_child = $(b).find(":nth-child(" + index + ")");
+            if (b_child.children().length > 0) {
+              b_child = b_child.children(":nth-child(1)");
+            }
+
+            var a_value = a_child.html().toLowerCase(),
+              b_value = b_child.html().toLowerCase();
+
+            if (
+              /^[0-9]{2}[/][0-9]{2}[/][0-9]{4}$/.test(a_value.replace(/ /g, ""))
+            ) {
+              var pieces = a_value.split("/");
+              a_value = pieces[2] + pieces[0] + pieces[1];
+            }
+
+            if (
+              /^[0-9]{2}[/][0-9]{2}[/][0-9]{4}$/.test(b_value.replace(/ /g, ""))
+            ) {
+              var pieces = b_value.split("/");
+              b_value = pieces[2] + pieces[0] + pieces[1];
+            }
+
+            if (isNaN(a_value) == false) a_value = parseFloat(a_value);
+            if (isNaN(b_value) == false) b_value = parseFloat(b_value);
+
+            if (direction == "asc") return a_value > b_value ? 1 : -1;
+            else return a_value > b_value ? -1 : 1;
+          });
+
+          this.node.append(rows);
+        };
+
+        this.clearRows = function () {
+          this.node.find(".content").remove();
+        };
+
+        this.addRow = function (row) {
+          this.node.append(row);
+
+          row.on("mousedown", function () {
+            MOUSE_CAME_DOWN_ON_ROW($(this));
+          });
+
+          row.on("mouseenter", function () {
+            row.addClass("mousein");
+          });
+          row.on("mouseleave", function () {
+            row.removeClass("mousein");
+          });
+
+          row.find('input[type="checkbox"]').on("input", function () {
+            row.toggleClass("selected");
+            SELECT_STATE_WAS_CHANGED_FOR_ROW($(this));
+          });
+        };
+
+        this.getNewRowForData = function (data) {
+          var html = '<tr draggable = "false" class = "content';
+
+          if (data["editable"] == true) {
+            html += " editable";
+          }
+
+          html += '" data-id = "' + data["id"] + '" ';
+
+          html += ">";
+
+          html += '<td> <input type = "checkbox"> </td>';
+          html += '<td class = "dc">' + data["date_created"] + "</td>";
+          html += '<td class = "ns">' + data["num_samples"] + "</td>";
+          html += '<td class = "ln">' + data["lab_name"] + "</td>";
+          html += '<td class = "sn">' + data["submitter_name"] + "</td>";
+          html +=
+            '<td class = "dsc"><a download href = "' +
+            data["sample_datasheet_url"] +
+            '">' +
+            data["description"] +
+            "</a></td>";
+          html += "</tr>";
+
+          return $(html);
+        };
+
+        this.refreshWithServerData = function (params) {
+          var wasrun = false;
+          var order = "position";
+
+          if (params != undefined) {
+            wasrun = params.filters.run;
+            order = params.order;
+          }
+
+          var request = {
+            edit_key: GET_EDIT_KEY(),
+            action: "getsamplesets",
+            order: order,
+            wasrun: wasrun,
+          };
+
+          $.ajax({
+            url: SERVER_URL,
+            type: "POST",
+            data: request,
+            timeout: 3000,
+            dataType: "json",
+            success: function (response) {
+              if (response.success) {
+                _this.dataRequestDidFinishWithSuccess(response.data);
+              } else {
+                _this.dataRequestDidFinishWithFailure();
+              }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+              _this.dataRequestDidFail();
+            },
+            fail: function () {
+              _this.dataRequestDidFinishWithFailure();
+            },
+          });
+        };
+
+        this.dataRequestDidFinishWithSuccess = function (data) {
+          this.clearRows();
+
+          for (var datum of data) {
+            var new_row = this.getNewRowForData(datum);
+            this.addRow(new_row);
+          }
+
+          this.node.attr("data-state", "active");
+          this.node.find("th").attr("data-direction", "");
+
+          REFRESH_QUEUE_COUNT_INDICATORS();
+        };
+
+        this.dataRequestDidFail = function (data) {
+          this.node.attr("data-state", "network_error");
+        };
+
+        this.dataRequestDidFinishWithFailure = function (failure_type) {
+          this.node.attr("data-state", "server_error");
+        };
+
+        this.getSampleSetOrderData = function () {
+          var data = [];
+
+          var i = 1;
+
+          this.node.find(".content").each(function (e) {
+            data.push({ id: parseInt($(this).attr("data-id")), position: i });
+            i++;
+          });
+
+          return data;
+        };
+
+        this.getSelectedSampleSetIds = function () {
+          var data = [];
+
+          this.node.find(".content.selected").each(function (e) {
+            data.push($(this).attr("data-id"));
+          });
+
+          return data;
+        };
+
+        this.deleteRowsWithSampleIds = function (ids) {
+          for (var id of ids) {
+            this.node.find('.content[data-id="' + id + '"]').remove();
+          }
+        };
+      }
+
+      function Form(node) {
+        var _this = this;
+        this.node = node;
+        this.error_console = this.node.find(".error_console");
+
+        this.node.on("click", function (e) {
+          e.stopPropagation();
+        });
+
+        this.node.find("#cancel_button").on("click", function () {
+          _this.hide();
+        });
+
+        this.node.find("#submit_button").on("click", function () {
+          _this.submit();
+        });
+
+        this.onCancel = function (callback) {
+          this.node.find("#cancel_button").on("click", function () {
+            callback.call();
+          });
+        };
+
+        this.submit = function () {
+          this.node.find("input").each(function () {
+            if ($(this).val().trim().length == 0) $(this).addClass("error");
+            else $(this).removeClass("error");
+          });
+
+          this.node.find("textarea").each(function () {
+            if ($(this).val().trim().length == 0) $(this).addClass("error");
+            else $(this).removeClass("error");
+          });
+
+          if (this.node.find(".error").length > 0) return;
+
+          var data = {};
+          data["lab_name"] = this.node.find("#labname_input").val();
+          data["submitter_name"] = this.node.find("#sub_name_input").val();
+          data["num_samples"] = parseInt(
+            this.node.find("#num_samples_input").val()
+          );
+          data["description"] = this.node.find("#sample_set_desc").val();
+
+          var file = this.node.find("#sample_datasheet_input")[0].files[0];
+          if (file == undefined) return;
+
+          var f_data = new FormData();
+          f_data.append("sample_datasheet", file);
+          f_data.append("action", "addnewsampleset");
+          f_data.append("edit_key", GET_EDIT_KEY());
+          f_data.append("data", JSON.stringify(data));
+
+          $.ajax({
+            url: SERVER_URL,
+            type: "POST",
+            contentType: false,
+            processData: false,
+            data: f_data,
+            timeout: 3000,
+            dataType: "json",
+            success: function (response) {
+              if (response.success) {
+                _this.dataRequestDidFinishWithSuccess(response.data);
+              } else {
+                _this.dataRequestDidFinishWithFailure(response.info);
+              }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+              _this.dataRequestDidFail();
+            },
+            fail: function () {
+              _this.dataRequestDidFinishWithFailure();
+            },
+          });
+        };
+
+        this.dataRequestDidFinishWithSuccess = function (data) {
+          this.error_console.html("");
+          this.success_callback.call();
+        };
+
+        this.onSuccess = function (callback) {
+          this.success_callback = callback;
+        };
+
+        this.dataRequestDidFail = function (data) {
+          this.error_console.html(
+            "An error occurred and your samples could not be submitted."
+          );
+        };
+
+        this.dataRequestDidFinishWithFailure = function (failure_type) {
+          this.error_console.html(
+            "An error occurred and your samples could not be submitted."
+          );
+        };
+
+        this.clearFields = function () {
+          this.node.find("input").val("");
+          this.node.find("textarea").val("");
+        };
+
+        this.show = function () {
+          this.node.addClass("visible");
+        };
+
+        this.hide = function () {
+          this.node.removeClass("visible");
+        };
+      }
+
+      REFRESH_STATS();
+      GET_USER_STATUS();
+
+      var QUEUE_TABLE = new Table($("#queue"));
+      var NEW_SAMPLE_FORM = new Form($("#new_sample_form"));
+      NEW_SAMPLE_FORM.onCancel(function () {
+        $("body").removeClass("overlay");
+      });
+      NEW_SAMPLE_FORM.onSuccess(function () {
+        QUEUE_TABLE.refreshWithServerData();
+        NEW_SAMPLE_FORM.hide();
+        NEW_SAMPLE_FORM.clearFields();
+        $("body").removeClass("overlay");
+
+        REFRESH_STATS();
+      });
+
+      $("#add_new_samples_button").on("click", function () {
+        $("body").addClass("overlay");
+        NEW_SAMPLE_FORM.show();
+      });
+
+      $("#delete_selected_sample_sets_button").on("click", function () {
+        var sample_set_ids = QUEUE_TABLE.getSelectedSampleSetIds();
+        if (sample_set_ids.length == 0) return;
+
+        if (
+          confirm("Are you sure you want to delete these sample sets?") == false
+        )
+          return;
+
+        var request = {
+          edit_key: GET_EDIT_KEY(),
+          action: "deletesamplesets",
+          data: JSON.stringify(sample_set_ids),
+        };
+
+        $.ajax({
+          url: SERVER_URL,
+          type: "POST",
+          data: request,
+          timeout: 3000,
+          dataType: "json",
+          success: function (response) {
+            if (response.success) {
+              FLASH_STATUS_BAR("success", "Changes were saved.");
+              QUEUE_TABLE.deleteRowsWithSampleIds(sample_set_ids);
+              REFRESH_STATS();
+            } else {
+              FLASH_STATUS_BAR("error", "A server error occurred.");
+            }
+          },
+          error: function (jqXHR, textStatus, errorThrown) {
+            FLASH_STATUS_BAR(
+              "error",
+              "A network error occurred. Try again later."
+            );
+          },
+          fail: function () {
+            FLASH_STATUS_BAR(
+              "error",
+              "A network error occurred. Try again later."
+            );
+          },
+        });
+      });
+
+      $("#mark_as_run_button").on("click", function () {
+        var sample_set_ids = QUEUE_TABLE.getSelectedSampleSetIds();
+        if (sample_set_ids.length == 0) return;
+
+        var date_string = $("#run_date").val();
+        if (date_string == undefined || date_string.length == 0) return;
+
+        var id_to_run_array = [];
+        for (var id of sample_set_ids)
+          id_to_run_array.push({ id: id, date_run: date_string });
+
+        var request = {
+          edit_key: GET_EDIT_KEY(),
+          action: "setrundatesforsamplesets",
+          data: JSON.stringify(id_to_run_array),
+        };
+
+        $.ajax({
+          url: SERVER_URL,
+          type: "POST",
+          data: request,
+          timeout: 3000,
+          dataType: "json",
+          success: function (response) {
+            if (response.success) {
+              FLASH_STATUS_BAR("success", "Changes were saved.");
+              QUEUE_TABLE.deleteRowsWithSampleIds(sample_set_ids);
+              REFRESH_STATS();
+            } else {
+              FLASH_STATUS_BAR("error", "A server error occurred.");
+            }
+          },
+          error: function (jqXHR, textStatus, errorThrown) {
+            FLASH_STATUS_BAR(
+              "error",
+              "A network error occurred. Try again later."
+            );
+          },
+          fail: function () {
+            FLASH_STATUS_BAR(
+              "error",
+              "A network error occurred. Try again later."
+            );
+          },
+        });
+      });
+
+      $("button").on("click", function (e) {
+        e.stopPropagation();
+      });
+
+      $("body").on("click", function () {
+        $("body").removeClass("overlay");
+        NEW_SAMPLE_FORM.hide();
+      });
+
+      $("#run_samples_tag").on("click", function () {
+        if ($(this).hasClass("active")) return;
+        $("#queue_samples_tag").removeClass("active");
+        $(this).addClass("active");
+        REFRESH_VIEW_MODE();
+      });
+
+      $("#queue_samples_tag").on("click", function () {
+        if ($(this).hasClass("active")) return;
+        $("#run_samples_tag").removeClass("active");
+        $(this).addClass("active");
+        REFRESH_VIEW_MODE();
+      });
+
+      function ROW_DRAG_DID_FINISH() {
+        var new_order_data = QUEUE_TABLE.getSampleSetOrderData();
+
+        var request = {
+          edit_key: GET_EDIT_KEY(),
+          action: "movesamplesets",
+          data: JSON.stringify(new_order_data),
+        };
+
+        $.ajax({
+          url: SERVER_URL,
+          type: "POST",
+          data: request,
+          timeout: 3000,
+          dataType: "json",
+          success: function (response) {
+            if (response.success) {
+              FLASH_STATUS_BAR("success", "Changes were saved.");
+            } else {
+              FLASH_STATUS_BAR("error", "A server error occurred.");
+            }
+          },
+          error: function (jqXHR, textStatus, errorThrown) {
+            FLASH_STATUS_BAR(
+              "error",
+              "A network error occurred. Try again later."
+            );
+          },
+          fail: function () {
+            FLASH_STATUS_BAR(
+              "error",
+              "A network error occurred. Try again later."
+            );
+          },
+        });
+      }
+
+      function REFRESH_VIEW_MODE() {
+        if ($("#queue_samples_tag").hasClass("active")) {
+          QUEUE_TABLE.refreshWithServerData({
+            filters: { run: false },
+            order: "position",
+          });
+
+          if ($("body").attr("data-status") == "admin") {
+            $("#run_section").addClass("visible");
+            $("#queue").addClass("sample_move_allowed");
+          }
+        } else {
+          $("#run_section").removeClass("visible");
+          $("#queue").removeClass("sample_move_allowed");
+          QUEUE_TABLE.refreshWithServerData({
+            filters: { run: true },
+            order: "daterun",
+          });
+        }
+      }
+
+      function GET_USER_STATUS() {
+        $.ajax({
+          url: SERVER_URL,
+          type: "POST",
+          data: { action: "getuserstatus", edit_key: GET_EDIT_KEY() },
+          timeout: 3000,
+          dataType: "json",
+          success: function (response) {
+            SET_EDIT_KEY(response.data["edit_key"]);
+
+            if (response.data["status"] === "admin") {
+              $("body").attr("data-status", "admin");
+              $("#queue").addClass("sample_move_allowed");
+              $("#run_section").addClass("visible");
+              $("#run_date").val(new Date().toISOString().slice(0, 10));
+            }
+          },
+          error: function (jqXHR, textStatus, errorThrown) {
+            FLASH_STATUS_BAR("error", "User status could not be determined");
+          },
+          fail: function () {
+            FLASH_STATUS_BAR("error", "User status could not be determined");
+          },
+        });
+      }
+
+      function REFRESH_STATS() {
+        $.ajax({
+          url: SERVER_URL,
+          type: "POST",
+          data: { action: "getstats" },
+          timeout: 3000,
+          dataType: "json",
+          success: function (response) {
+            if (response.success) {
+              $("#total_samples_run").html(response.data["num_samples_run"]);
+              $("#samples_in_queue").attr(
+                "data-count",
+                response.data["num_samples_not_yet_run"]
+              );
+              document.title =
+                "MetaboQ (" + response.data["num_samples_not_yet_run"] + ")";
+            }
+
+            REFRESH_QUEUE_COUNT_INDICATORS();
+          },
+          error: function (jqXHR, textStatus, errorThrown) {},
+          fail: function () {},
+        });
+      }
+
+      function REFRESH_QUEUE_COUNT_INDICATORS() {
+        var num_selected_samples = 0;
+
+        $(".selected .ns").each(function (index, item) {
+          num_selected_samples += parseInt($(this).html());
+        });
+
+        var text = $("#samples_in_queue").attr("data-count");
+        if (num_selected_samples > 0) {
+          text =
+            '<span style="color:blue; margin:0">' +
+            num_selected_samples +
+            "</span> / " +
+            text;
+        }
+        $("#samples_in_queue").html(text);
+
+        $("#total_samples_run").html(
+          $("#total_samples_run").attr("data-count")
+        );
+      }
+
+      $("#queue_samples_tag").click();
+    </script>
+  </body>
+</html>
